@@ -12,7 +12,7 @@
  * @package		Flexiblemigrations
  * @author 		Matías Montes
  * @author 		Jamie Madill
- * @author    Fernando Petrelli
+ * @author    	Fernando Petrelli
  */
 
 class Kohana_Flexiblemigrations
@@ -21,7 +21,7 @@ class Kohana_Flexiblemigrations
 
 	public function __construct()
 	{
-		$this->_config = Kohana::$config->load('flexiblemigrations')->as_array();
+		$this->_config = Kohana::$config->load('config')->as_array();
 	}
 
 	public function get_config() 
@@ -64,10 +64,9 @@ class Kohana_Flexiblemigrations
 					$model->save();
 					$model ? $messages[] = array(0 => $msg) : $messages[] = array(1 => $msg);
 				}
-				catch (Exception $e)
+				catch (Database_Exception $e)
 				{
-					$messages[] = array(1 => $msg . "\n" . $e->getMessage());
-					return $messages;
+					$messages[] = array(1 => $msg . "\n" . $e->getMessage());	
 				}
 			}
 		}
@@ -129,6 +128,7 @@ class Kohana_Flexiblemigrations
 	 */
 	public function get_migrations()	
 	{
+		return Kohana::list_files('migrations');
 		$migrations = glob($this->_config['path'].'*'.EXT);
 		foreach ($migrations as $i => $file)
 		{
@@ -167,21 +167,31 @@ class Kohana_Flexiblemigrations
 		{
 			return 1;
 		}
-	}	
+	}
+
+	protected function split_name($name)
+	{
+		if (!preg_match('#^(\d+)_(\w+)$#', $name, $match))
+			return false;
+		return array($match[1], $match[2]);
+	}
 
 	/**
 	 * Get all migration keys (timestamps)
 	 *
 	 * @return array migrations_keys
 	 */
-	protected function get_migration_keys() 
+	public function get_migration_keys()
 	{
 		$migrations = $this->get_migrations();
 		$keys = array();
 		foreach ($migrations as $migration) 
 		{
-			$sub_migration = substr(basename($migration, EXT), 0, 14);
-			$keys = Arr::merge($keys, array($sub_migration => substr(basename($migration, EXT), 15)));
+			$parts = $this->split_name(basename($migration, EXT));
+			if ($parts)
+			{
+				$keys = Arr::merge($keys, array($parts[0] => $migration));
+			}
 		}
 		return $keys;
 	}
@@ -191,27 +201,26 @@ class Kohana_Flexiblemigrations
 	 *
 	 * @return Migration object with up and down functions
 	 */
-	protected function load_migration($version) 
+	protected function load_migration($version)
 	{
-		$f = glob($this->_config['path'].$version.'*'. EXT);
+		$keys = $this->get_migration_keys();
 
-		if ( count($f) > 1 ) // Only one migration per step is permitted
-			throw new Kohana_Exception('There are repeated migration names');
-
-		if ( count($f) == 0 ) // Migration step not found
+		if (!array_key_exists($version, $keys)) // Migration step not found
 			throw new Kohana_Exception("There's no migration to rollback");
 
-		$file = basename($f[0]);
-		$name = basename($f[0], EXT);
+		$f = $keys[$version];
+
+		$file = basename($f);
+		$name = basename($f, EXT);
 
 		// Filename validation
-		if ( !preg_match('/^\d{14}_(\w+)$/', $name, $match) )
+		if ( !($parts = $this->split_name($name)) )
 			throw new Kohana_Exception('Invalid filename :file', array(':file' => $file));
 
-		$match[1] = strtolower($match[1]);
-		require $f[0]; //Includes migration class file
+		$parts[1] = strtolower($parts[1]);
+		require $f; //Includes migration class file
 
-		$class = ucfirst($match[1]); //Get the class name capitalized
+		$class = ucfirst($parts[1]); //Get the class name capitalized
 
 		if ( !class_exists($class) )
 			throw new Kohana_Exception('Class :class doesn\'t exists', array(':class' => $class));

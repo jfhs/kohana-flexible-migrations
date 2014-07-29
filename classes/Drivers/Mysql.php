@@ -30,7 +30,9 @@ class Drivers_Mysql extends Drivers_Driver
 			
 			if ($primary_key === $field_name AND $params[0] == 'integer')
 			{
-				$params['auto'] = TRUE;
+				if (!isset($params['auto'])) {
+					$params['auto'] = TRUE;
+				}
 			}
 			
 			$sql .= $this->compile_column($field_name, $params);
@@ -95,14 +97,14 @@ class Drivers_Mysql extends Drivers_Driver
 	{
 		switch ($index_type)
 		{
-			case 'normal':   $type = 'INDEX'; break;
-			case 'unique':   $type = 'UNIQUE KEY'; break;
-			case 'primary':  $type = 'PRIMARY KEY'; break;
+			case 'normal':   $type = ''; break;
+			case 'unique':   $type = 'UNIQUE'; break;
+			case 'primary':  $type = 'PRIMARY'; break;
 			
-			default: throw new Kohana_Exception('migrations.bad_index_type :index_type', array(':index_type' => $index_type));
+			default: throw new Exception('migrations.bad_index_type', $index_type);
 		}
 		
-		$sql = "ALTER TABLE `$table_name` ADD $type `$index_name` (";
+		$sql = "ALTER TABLE `$table_name` ADD $type INDEX `$index_name` (";
 		
 		foreach ((array) $columns as $column)
 		{
@@ -126,10 +128,11 @@ class Drivers_Mysql extends Drivers_Driver
 			throw new Kohana_Exception('migrations.missing_argument');
 		}
 		
-		$params = (array) $params;
-		$null   = TRUE;
-		$auto   = FALSE;
-		$unsigned = FALSE;
+		$params 	= (array) $params;
+		$null   	= TRUE;
+		$auto   	= FALSE;
+		$column_key = '';
+		$additional = '';
 
 		foreach ($params as $key => $param)
 		{
@@ -139,6 +142,14 @@ class Drivers_Mysql extends Drivers_Driver
 			{
 				switch ($key)
 				{
+					case 'key':
+						switch ($param)
+						{
+							case 'PRIMARY':
+							case 'UNIQUE':
+								$column_key = $param.' KEY ';
+								break;
+						}
 					case 'after':   if ($allow_order) $order = "AFTER `$param`"; break;
 					case 'null':    $null = (bool) $param; break;
 					case 'default': 
@@ -155,8 +166,7 @@ class Drivers_Mysql extends Drivers_Driver
 					    }
 					  break;
 					case 'auto':    $auto = (bool) $param; break;
-					case 'unsigned': $unsigned = $param; break;
-					default: throw new Kohana_Exception('migrations.bad_column :key', array(':key' => $key));
+					default: throw new Kohana_Exception('migrations.bad_column', $key);
 				}
 				continue; // next iteration
 			}
@@ -179,11 +189,12 @@ class Drivers_Mysql extends Drivers_Driver
 			
 			switch ($param)
 			{
-				case 'first':   if ($allow_order) $order = 'FIRST'; continue 2;
+				case 'first':   if ($allow_order) $order = 'FIRST'; continue 2; break;
+				case 'unsigned': $additional .= ' '.$param.' '; continue 2; break;
 				default: break;
 			}
 
-			throw new Kohana_Exception('migrations.bad_column :column', array(':column' => $column));
+			throw new Kohana_Exception('migrations.bad_column', $param);
 		}
 
 		if (empty($type))
@@ -193,12 +204,13 @@ class Drivers_Mysql extends Drivers_Driver
 
 		$sql  = " `$field_name` $type ";
 
-		if ($unsigned) {
-			$sql .= ' UNSIGNED ';
-		}
 		isset($default)  and $sql .= " $default ";
-		$sql .= $null    ? ' NULL ' : ' NOT NULL ';
-		$sql .= $auto    ? ' AUTO_INCREMENT ' : '';
+		$sql .= $additional;
+		$sql .= $null    	? ' NULL ' : ' NOT NULL ';
+		$sql .= $auto    	? ' AUTO_INCREMENT ' : '';
+		$sql .= $column_key	? ' '.$column_key.' ' : '';
+
+
 		isset($order)    and $sql .= " $order ";
 		
 		return $sql;
@@ -212,7 +224,7 @@ class Drivers_Mysql extends Drivers_Driver
 
 		if ($result->count() !== 1)
 		{
-			throw new Kohana_Exception('migrations.column_not_found :col_name, :table_name', array(':col_name' => $column_name, ':table_name' => $table_name));
+			throw new Kohana_Exception('migrations.column_not_found', $column_name, $table_name);
 		}
 		
 		$result = $result->current();
@@ -247,7 +259,7 @@ class Drivers_Mysql extends Drivers_Driver
 	{
 		if (!$this->is_type($type))
 		{
-			throw new Kohana_Exception('migrations.unknown_type :type', array(':type' => $type));
+			throw new Kohana_Exception('migrations.unknown_type', $type);
 		}
 		
  		if (empty($limit))
@@ -263,9 +275,10 @@ class Drivers_Mysql extends Drivers_Driver
 					case 'big':    return 'bigint';
 					case 'normal': return 'int';
 					case 'small':  return 'smallint';
+					case (intval($limit) > 0): return 'int('.intval($limit).')';
 					default: break;
 				}
-				throw new Kohana_Exception('migrations.unknown_type :type', array(':type' => $type));
+				throw new Kohana_Exception('migrations.unknown_type', $type);
 				
 			case 'string': return "varchar ($limit)";
 			case 'boolean': return 'tinyint (1)';
@@ -293,7 +306,7 @@ class Drivers_Mysql extends Drivers_Driver
 		
 		if (!$this->is_type($native))
 		{
-			throw new Kohana_Exception('migrations.unknown_type :type', array(':type' => $type));
+			throw new Kohana_Exception('migrations.unknown_type', $type);
 		}
 		
 		return $native . "[$limit]";

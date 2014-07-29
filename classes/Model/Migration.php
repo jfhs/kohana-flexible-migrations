@@ -2,14 +2,6 @@
 
 class Model_Migration extends ORM {
 
-	protected $_table_columns = array(
-		'id'         => array('type' => 'int'),
-		'hash'       => array('type' => 'string'),
-		'name'       => array('type' => 'string'),
-		'updated_at' => array('type' => 'datetime'),
-		'created_at' => array('type' => 'datetime'),
-	);
-
 	public function is_installed() {
 		try {
       $this->count_all();
@@ -28,5 +20,5 @@ class Model_Migration extends ORM {
     	}
 	  }
 	}
-
+  
 }

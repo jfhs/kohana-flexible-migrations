@@ -14,8 +14,8 @@
  * Reworked for Kohana by Jamie Madill
  *
  * @package		Migrations
- * @author		Matías Montes
- * @author    Jamie Madill
+ * @author		Matï¿½as Montes
+ * @author      Jamie Madill
  */
 
 class Migration
@@ -30,18 +30,9 @@ class Migration
 	public function __construct($output = FALSE, $group = 'default')
 	{
 		$this->db = Database::instance($this->group);
-
-		$platform = 'mysql'; // $this->db->platform();
-		if ($platform = 'mysqli')
-			$platform = 'mysql';
 		
 		// Set driver name
 		$driver = 'Drivers_Mysql';
-		
-		// Load the driver
-		//if ( ! Kohana::auto_load($driver)) {
-		//	throw new Kohana_Database_Exception('core.driver_not_found', $platform, get_class($this));
-		//}
 		
 		$this->driver = new $driver($group, $this->db);
 		$this->output = $output;
@@ -158,6 +149,7 @@ class Migration
 	 * @param   string  Name of the table
 	 * @param   string  Name of the column
 	 * @param   string  New name
+	 * @param	array	Column arguments
 	 * @return  bool
 	 */
 	public function rename_column($table_name, $column_name, $new_column_name, $params)
@@ -231,20 +223,9 @@ class Migration
 		return $ret;
 	}
 
-	/**
-	 * Execute custom query
-	 *
-	 * @param   string  SQL query to execute
-	 * @return  bool
-	 */
-	public function sql($query)
-	{
-		return $this->driver->run_query($query);
-	}
-
 	public function commit()
-	{
+  {
 		$this->driver->run_query('COMMIT');
-	}	
+  }	
 
 }

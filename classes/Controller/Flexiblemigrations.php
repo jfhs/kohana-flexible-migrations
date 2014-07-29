@@ -38,8 +38,7 @@ class Controller_Flexiblemigrations extends Kohana_Controller_Template {
 
 	public function action_index() 
 	{
-		$migrations=$this->migrations->get_migrations();
-		rsort($migrations);
+		$migrations=$this->migrations->get_migration_keys();
 
 		//Get migrations already runned from the DB
 		$migrations_runned = ORM::factory('Migration')->find_all()->as_array('hash');
@@ -77,7 +76,7 @@ class Controller_Flexiblemigrations extends Kohana_Controller_Template {
 			$session->set('message',  $e->getMessage());
 		}
 
-	 	$this->redirect(Route::get('migrations_route')->uri());
+	 	$this->redirect(URL::base().Route::get('migrations_route')->uri());
 	}
 
 	public function action_migrate() 

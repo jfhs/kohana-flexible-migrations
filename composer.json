@@ -3,6 +3,7 @@
     "type":        "kohana-module",
     "description": "Kohana rails-like migrations module",
     "keywords":    ["kohana", "module", "migrations"],
+    "version":     "3.3.0",
     "authors": [
         {
             "name":     "jfhs",

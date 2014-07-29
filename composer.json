@@ -1,0 +1,19 @@
+{
+    "name":        "jfhs/kohana-flexible-migrations",
+    "type":        "kohana-module",
+    "description": "Kohana rails-like migrations module",
+    "keywords":    ["kohana", "module", "migrations"],
+    "authors": [
+        {
+            "name":     "jfhs",
+            "email":    "romoper@yandex.ru",
+            "role":     "developer"
+        }
+    ],
+    "require": {
+        "composer/installers": "~1.0",
+        "kohana/core":         ">=3.3",
+        "kohana/database":     ">=3.3",
+        "php":                 ">=5.3.3"
+    }
+}

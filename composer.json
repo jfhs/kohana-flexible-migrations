@@ -12,13 +12,13 @@
     ],
     "require": {
         "composer/installers": "~1.0",
-        "kohana/core":         ">=3.3",
-        "kohana/database":     ">=3.3",
+        "kohana/core":         "3.3.*",
+        "kohana/database":     "3.3.*",
         "php":                 ">=5.3.3"
     },
     "extra": {
         "branch-alias": {
-            "dev-master": "3.3.x-dev"
+            "dev-master": "3.3.0"
         }
     }
 }
